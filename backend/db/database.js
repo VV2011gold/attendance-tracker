@@ -13,15 +13,20 @@ const fs   = require('fs');
 // node:sqlite is built in — no npm install needed
 const { DatabaseSync } = require('node:sqlite');
 
-// Resolve the database file path from .env or fall back to project root
+// Resolve the database file path.
+// Render free tier: use /opt/render/project/src/data (writable, inside project).
+// Local dev: falls back to project root.
 const dbPath = path.resolve(
-  process.env.DATABASE_PATH || path.join(__dirname, '../../attendance.db')
+  process.env.DATABASE_PATH ||
+  path.join(__dirname, '../../data/attendance.db')
 );
 const schemaPath = path.join(__dirname, 'schema.sql');
 
 // Create the directory for the DB file if it doesn't already exist
 const dbDir = path.dirname(dbPath);
-if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
 // Open (or create) the SQLite database
 const db = new DatabaseSync(dbPath);

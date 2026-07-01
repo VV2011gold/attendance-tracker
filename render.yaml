@@ -8,8 +8,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_PATH
-        value: /var/data/attendance.db
       - key: SLACK_BOT_TOKEN
         sync: false          # set manually in Render dashboard
       - key: SLACK_CHANNEL_ID
@@ -18,7 +16,4 @@ services:
         value: America/New_York
       - key: REMINDER_TIME
         value: "30 7 * * *"
-    disk:
-      name: attendance-data
-      mountPath: /var/data
-      sizeGB: 1              # free 1 GB persistent disk
+    # No disk block — free tier uses project directory for SQLite
