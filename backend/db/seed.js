@@ -1,13 +1,11 @@
 /**
- * seed.js — Real team data seeded from screenshot (June 2026)
- *
- * Employees : Jayesh, Parinitha, Prakriti, Ritika, Vignesh, Vijayshanthi
- * Attendance: June 2026 — days 20-30 as visible in the screenshot
- *
- * Run: node backend/db/seed.js
+ * seed.js — Real team data (June 2026)
+ * Can be run standalone: node backend/db/seed.js
+ * Or triggered via POST /api/seed (runs inside server process, same DB connection)
  */
 
 require('dotenv').config({ path: __dirname + '/../.env' });
+// Re-use the already-open DB singleton when called from within the server
 const db = require('./database');
 
 console.log('[Seed] Starting…');

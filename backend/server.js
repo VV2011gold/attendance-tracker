@@ -42,6 +42,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ── Seed endpoint — runs inside the server process so it writes to the correct DB
+app.post('/api/seed', (req, res) => {
+  try {
+    require('./db/seed');
+    res.json({ success: true, message: 'Seed completed' });
+  } catch (err) {
+    console.error('[Seed] Error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ── SPA fallback: serve index.html for any non-API GET ─────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
