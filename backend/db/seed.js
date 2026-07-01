@@ -1,5 +1,10 @@
 /**
- * seed.js — employees have no fixed shift; each day's record carries its own shift
+ * seed.js — Real team data seeded from screenshot (June 2026)
+ *
+ * Employees : Jayesh, Parinitha, Prakriti, Ritika, Vignesh, Vijayshanthi
+ * Attendance: June 2026 — days 20-30 as visible in the screenshot
+ *
+ * Run: node backend/db/seed.js
  */
 
 require('dotenv').config({ path: __dirname + '/../.env' });
@@ -7,31 +12,23 @@ const db = require('./database');
 
 console.log('[Seed] Starting…');
 
-function daysAgo(n) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-}
-
-// ── Employees (no shift field) ────────────────────────────────────────────────
+// ── Employees ─────────────────────────────────────────────────────────────────
 const employees = [
-  { name: 'John Smith',    employee_id: 'EMP001', department: 'Engineering' },
-  { name: 'Jane Doe',      employee_id: 'EMP002', department: 'Engineering' },
-  { name: 'Mark Lee',      employee_id: 'EMP003', department: 'QA'          },
-  { name: 'Sarah Johnson', employee_id: 'EMP004', department: 'Design'      },
-  { name: 'Alice Brown',   employee_id: 'EMP005', department: 'Operations'  },
-  { name: 'Bob Wilson',    employee_id: 'EMP006', department: 'Operations'  },
-  { name: 'Carol Davis',   employee_id: 'EMP007', department: 'Support'     },
-  { name: 'Dan Miller',    employee_id: 'EMP008', department: 'Support'     },
+  { name: 'Jayesh',       employee_id: 'EMP001' },
+  { name: 'Parinitha',    employee_id: 'EMP002' },
+  { name: 'Prakriti',     employee_id: 'EMP003' },
+  { name: 'Ritika',       employee_id: 'EMP004' },
+  { name: 'Vignesh',      employee_id: 'EMP005' },
+  { name: 'Vijayshanthi', employee_id: 'EMP006' },
 ];
 
 const insertEmployee = db.prepare(`
-  INSERT OR IGNORE INTO employees (name, employee_id, department)
-  VALUES (?, ?, ?)
+  INSERT OR IGNORE INTO employees (name, employee_id)
+  VALUES (?, ?)
 `);
 
 db.exec('BEGIN;');
-for (const e of employees) insertEmployee.run(e.name, e.employee_id, e.department);
+for (const e of employees) insertEmployee.run(e.name, e.employee_id);
 db.exec('COMMIT;');
 console.log(`[Seed] Inserted/skipped ${employees.length} employees`);
 
@@ -40,27 +37,99 @@ const dbEmployees = db.prepare(`SELECT id, employee_id FROM employees WHERE acti
 const empMap = {};
 for (const e of dbEmployees) empMap[e.employee_id] = e.id;
 
-// ── Attendance — each day each employee gets a random shift ───────────────────
-const SHIFTS   = ['7:00 AM', '4:30 AM'];
-const STATUSES = ['On Shift 7AM', 'On Shift 7AM', 'On Shift 4:30AM', 'Week Off', 'Holiday', 'On Leave', 'Half Day', 'Comp Off'];
+// ── Attendance data from screenshot (June 2026) ───────────────────────────────
+// Format: { employee_id, date: 'YYYY-MM-DD', status }
+// S7 = On Shift 7AM  |  S4 = On Shift 4:30AM
+
+const S7 = 'On Shift 7AM';
+const S4 = 'On Shift 4:30AM';
+
+// Read directly from the screenshot row by row, day by day
+// Days visible: 20(Fri), 21(Sat), 22(Sun), 23(Mon), 24(Tue), 25(Wed), 26(Thu), 27(Fri), 28(Sat), 29(Sun), 30(Mon)
+
+const attendance = [
+  // ── Jayesh ──────────────────────────────────────────────────────────────────
+  // day 20 = S7, 22-28 = S7, 30 = S7  (no entry on 21,29)
+  { emp: 'EMP001', date: '2026-06-20', status: S7 },
+  { emp: 'EMP001', date: '2026-06-22', status: S7 },
+  { emp: 'EMP001', date: '2026-06-23', status: S7 },
+  { emp: 'EMP001', date: '2026-06-24', status: S7 },
+  { emp: 'EMP001', date: '2026-06-25', status: S7 },
+  { emp: 'EMP001', date: '2026-06-26', status: S7 },
+  { emp: 'EMP001', date: '2026-06-27', status: S7 },
+  { emp: 'EMP001', date: '2026-06-28', status: S7 },
+  { emp: 'EMP001', date: '2026-06-30', status: S7 },
+
+  // ── Parinitha ────────────────────────────────────────────────────────────────
+  // day 21 = S4, 22-28 = S7, 29 = S7  (summary 7S7 1S4)
+  { emp: 'EMP002', date: '2026-06-21', status: S4 },
+  { emp: 'EMP002', date: '2026-06-22', status: S7 },
+  { emp: 'EMP002', date: '2026-06-23', status: S7 },
+  { emp: 'EMP002', date: '2026-06-24', status: S7 },
+  { emp: 'EMP002', date: '2026-06-25', status: S7 },
+  { emp: 'EMP002', date: '2026-06-26', status: S7 },
+  { emp: 'EMP002', date: '2026-06-27', status: S7 },
+  { emp: 'EMP002', date: '2026-06-28', status: S7 },
+  { emp: 'EMP002', date: '2026-06-29', status: S7 },
+
+  // ── Prakriti ─────────────────────────────────────────────────────────────────
+  // day 21 = S4, 22-27 = S7  (summary 6S7 1S4)
+  { emp: 'EMP003', date: '2026-06-21', status: S4 },
+  { emp: 'EMP003', date: '2026-06-22', status: S7 },
+  { emp: 'EMP003', date: '2026-06-23', status: S7 },
+  { emp: 'EMP003', date: '2026-06-24', status: S7 },
+  { emp: 'EMP003', date: '2026-06-25', status: S7 },
+  { emp: 'EMP003', date: '2026-06-26', status: S7 },
+  { emp: 'EMP003', date: '2026-06-27', status: S7 },
+
+  // ── Ritika ───────────────────────────────────────────────────────────────────
+  // day 21 = S4, 22-27 = S7, 30 = S4  (summary 6S7 2S4)
+  { emp: 'EMP004', date: '2026-06-21', status: S4 },
+  { emp: 'EMP004', date: '2026-06-22', status: S7 },
+  { emp: 'EMP004', date: '2026-06-23', status: S7 },
+  { emp: 'EMP004', date: '2026-06-24', status: S7 },
+  { emp: 'EMP004', date: '2026-06-25', status: S7 },
+  { emp: 'EMP004', date: '2026-06-26', status: S7 },
+  { emp: 'EMP004', date: '2026-06-27', status: S7 },
+  { emp: 'EMP004', date: '2026-06-30', status: S4 },
+
+  // ── Vignesh ──────────────────────────────────────────────────────────────────
+  // day 21 = S4, 22-27 = S7  (summary 6S7 1S4)
+  { emp: 'EMP005', date: '2026-06-21', status: S4 },
+  { emp: 'EMP005', date: '2026-06-22', status: S7 },
+  { emp: 'EMP005', date: '2026-06-23', status: S7 },
+  { emp: 'EMP005', date: '2026-06-24', status: S7 },
+  { emp: 'EMP005', date: '2026-06-25', status: S7 },
+  { emp: 'EMP005', date: '2026-06-26', status: S7 },
+  { emp: 'EMP005', date: '2026-06-27', status: S7 },
+
+  // ── Vijayshanthi ─────────────────────────────────────────────────────────────
+  // day 20 = S7, 21 = S4, 22-27 = S7, 29 = S7  (summary 8S7 1S4)
+  { emp: 'EMP006', date: '2026-06-20', status: S7 },
+  { emp: 'EMP006', date: '2026-06-21', status: S4 },
+  { emp: 'EMP006', date: '2026-06-22', status: S7 },
+  { emp: 'EMP006', date: '2026-06-23', status: S7 },
+  { emp: 'EMP006', date: '2026-06-24', status: S7 },
+  { emp: 'EMP006', date: '2026-06-25', status: S7 },
+  { emp: 'EMP006', date: '2026-06-26', status: S7 },
+  { emp: 'EMP006', date: '2026-06-27', status: S7 },
+  { emp: 'EMP006', date: '2026-06-29', status: S7 },
+];
 
 const insertRecord = db.prepare(`
-  INSERT OR IGNORE INTO attendance_records (employee_id, date, shift, status, check_in, check_out, remarks)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
+  INSERT OR IGNORE INTO attendance_records (employee_id, date, status)
+  VALUES (?, ?, ?)
 `);
 
 let count = 0;
 db.exec('BEGIN;');
-for (let dayOffset = 0; dayOffset <= 6; dayOffset++) {
-  const date = daysAgo(dayOffset);
-  for (const [empId, pk] of Object.entries(empMap)) {
-    const shift  = SHIFTS[Math.floor(Math.random() * SHIFTS.length)];
-    const status = STATUSES[Math.floor(Math.random() * STATUSES.length)];
-    insertRecord.run(pk, date, shift, status, null, null,
-      status === 'On Leave' ? 'Annual leave' : null);
-    count++;
-  }
+for (const rec of attendance) {
+  const pk = empMap[rec.emp];
+  if (!pk) { console.warn(`[Seed] Unknown employee_id: ${rec.emp}`); continue; }
+  insertRecord.run(pk, rec.date, rec.status);
+  count++;
 }
 db.exec('COMMIT;');
+
 console.log(`[Seed] Inserted/skipped ${count} attendance records`);
-console.log('[Seed] Done.');
+console.log('[Seed] Done. Open June 2026 in the app to see your data.');
