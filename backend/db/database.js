@@ -13,13 +13,25 @@ const fs   = require('fs');
 // node:sqlite is built in — no npm install needed
 const { DatabaseSync } = require('node:sqlite');
 
-// Resolve the database file path.
-// Render free tier: use /opt/render/project/src/data (writable, inside project).
-// Local dev: falls back to project root.
-const dbPath = path.resolve(
-  process.env.DATABASE_PATH ||
-  path.join(__dirname, '../../data/attendance.db')
-);
+// Safe writable fallback — always inside the project directory.
+// On Render free tier /opt/render/project/src is writable; /var/data is not.
+const PROJECT_ROOT = path.join(__dirname, '../..');
+const DEFAULT_DB   = path.join(PROJECT_ROOT, 'data', 'attendance.db');
+
+// If DATABASE_PATH is set but points to a non-writable root path, ignore it
+// and fall back to the safe default.
+function resolveDbPath() {
+  const envPath = process.env.DATABASE_PATH;
+  if (!envPath) return DEFAULT_DB;
+  // Reject paths that start with /var or other system roots not owned by app
+  if (/^\/(var|etc|usr|sys|proc)/.test(envPath)) {
+    console.warn(`[DB] DATABASE_PATH "${envPath}" is a restricted path — using default: ${DEFAULT_DB}`);
+    return DEFAULT_DB;
+  }
+  return path.resolve(envPath);
+}
+
+const dbPath     = resolveDbPath();
 const schemaPath = path.join(__dirname, 'schema.sql');
 
 // Create the directory for the DB file if it doesn't already exist
