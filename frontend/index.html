@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendance Tracker</title>
+  <link rel="stylesheet" href="styles/styles.css" />
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0969da" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <h1>Attendance Tracker</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="header-meta" id="headerDate"></span>
+      <button class="btn btn-secondary" id="addEventBtn">+ Add Event</button>
+      <button class="btn btn-secondary" id="manageEmpBtn">Manage Employees</button>
+      <button class="btn btn-primary"   id="addEmployeeBtn">+ Add Employee</button>
+    </div>
+  </header>
+
+  <!-- ── Main ────────────────────────────────────────────────────────────── -->
+  <main class="app-main">
+    <div class="card">
+
+      <!-- ── Toolbar ──────────────────────────────────────────────────── -->
+      <div class="toolbar">
+
+        <!-- Month navigation -->
+        <div class="toolbar-group">
+          <button class="btn btn-secondary btn-sm" id="prevMonth" title="Previous month">&#8249;</button>
+          <span class="month-title-label" id="monthTitle">Loading…</span>
+          <button class="btn btn-secondary btn-sm" id="nextMonth" title="Next month">&#8250;</button>
+          <!-- Native month picker (hidden visually, synced to state) -->
+          <input type="month" id="monthPicker" title="Jump to month" style="height:28px;border:1px solid var(--color-border);border-radius:var(--radius);padding:0 6px;font-size:.8rem" />
+        </div>
+
+        <span class="toolbar-sep"></span>
+
+        <!-- Search -->
+        <div class="toolbar-group">
+          <input type="text" id="searchInput" placeholder="Search by name or ID…" style="min-width:180px" />
+        </div>
+
+        <button class="btn btn-secondary" id="clearFilters">Clear</button>
+
+        <span class="toolbar-sep" style="margin-left:auto"></span>
+
+        <!-- Copy / Paste (Excel-style) -->
+        <div class="toolbar-group" id="copyPasteGroup" style="gap:5px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" id="selectModeBtn" title="Toggle cell selection mode (click cells, drag, or click row/col headers)">Select</button>
+          <span class="copy-info" id="copyInfo" style="display:none"></span>
+          <button class="btn btn-secondary btn-sm" id="copyDayBtn"    style="display:none" title="Copy selected cells (⌘C)">Copy</button>
+          <button class="btn btn-secondary btn-sm" id="cutDayBtn"     style="display:none" title="Cut selected cells (⌘X)">Cut</button>
+          <button class="btn btn-primary   btn-sm" id="pasteDayBtn"   style="display:none" title="Paste (⌘V)">Paste</button>
+          <button class="btn btn-secondary btn-sm" id="undoDayBtn"    style="display:none" title="Undo last paste/delete (⌘Z)">↩ Undo</button>
+          <button class="btn btn-danger    btn-sm" id="deleteDayBtn"  style="display:none" title="Clear selected cells (Delete key)">Clear</button>
+          <button class="btn btn-danger    btn-sm" id="cancelCopyBtn" style="display:none" title="Cancel / clear selection (Esc)">✕ Cancel</button>
+        </div>
+
+        <span class="toolbar-sep"></span>
+
+        <!-- Legend -->
+        <div class="toolbar-group" style="gap:5px">
+          <span class="legend-chip lc-S7">S7</span><span class="legend-label">Shift 7AM</span>
+          <span class="legend-chip lc-S4">S4</span><span class="legend-label">Shift 4:30AM</span>
+          <span class="legend-chip lc-W">W</span><span class="legend-label">Week Off</span>
+          <span class="legend-chip lc-H">H</span><span class="legend-label">Holiday</span>
+          <span class="legend-chip lc-OL">OL</span><span class="legend-label">Leave</span>
+          <span class="legend-chip lc-HD">HD</span><span class="legend-label">Half</span>
+          <span class="legend-chip lc-CO">CO</span><span class="legend-label">Comp Off</span>
+        </div>
+
+        <span class="toolbar-sep"></span>
+
+        <!-- Export -->
+        <button class="btn btn-success" id="exportCsv">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Export CSV
+        </button>
+      </div>
+
+      <!-- ── Stats bar ─────────────────────────────────────────────────── -->
+      <div class="stats-bar" id="statsBar">
+        <!-- populated by grid.js renderStats() -->
+      </div>
+
+      <!-- ── Month grid (horizontal scroll) ────────────────────────────── -->
+      <div class="grid-wrapper" id="gridWrapper">
+        <div style="text-align:center;padding:48px">
+          <span class="spinner"></span>
+          <p style="margin-top:12px;color:var(--color-muted)">Loading…</p>
+        </div>
+      </div>
+
+      <!-- ── Legend footer ─────────────────────────────────────────────── -->
+      <div class="legend-bar">
+        <span><strong>Select</strong> mode: drag / Shift+click to select cells · <strong>⌘C</strong> copy · <strong>⌘X</strong> cut · <strong>⌘V</strong> paste · <strong>Del</strong> clear · <strong>⌘Z</strong> undo · click row/col header to select all</span>
+        <span class="legend-item"><span class="col-today-swatch"></span> Today</span>
+        <span class="legend-item"><span class="col-weekend-swatch"></span> Weekend</span>
+      </div>
+
+    </div><!-- /.card -->
+  </main>
+
+</div><!-- /.app-wrapper -->
+
+<!-- ── Toast container ─────────────────────────────────────────────────── -->
+<div id="toast-container" role="status" aria-live="polite"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     Add / Edit Employee Modal
+════════════════════════════════════════════════════════════════════════ -->
+<div id="empModal" class="modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="empModalTitle">
+  <div class="modal">
+    <h2 id="empModalTitle">Add Employee</h2>
+    <button class="close-btn" id="empModalClose" aria-label="Close">&times;</button>
+    <form id="empForm" novalidate>
+      <div class="form-grid">
+        <div class="field full-col">
+          <label for="empName">Full Name *</label>
+          <input type="text" id="empName" placeholder="e.g. John Smith" maxlength="120" autocomplete="off" />
+        </div>
+        <div class="field full-col">
+          <label for="empDept">Department</label>
+          <input type="text" id="empDept" placeholder="optional" maxlength="100" />
+        </div>
+      </div>
+    </form>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="empModalCancel">Cancel</button>
+      <button class="btn btn-primary"   id="empSaveBtn" data-mode="create">Save Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     Manage Employees Modal
+════════════════════════════════════════════════════════════════════════ -->
+<div id="empListModal" class="modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="empListTitle">
+  <div class="modal" style="width:min(700px,96vw);max-height:85vh;overflow-y:auto">
+    <h2 id="empListTitle">Manage Employees</h2>
+    <button class="close-btn" id="empListModalClose" aria-label="Close">&times;</button>
+    <div id="empListBody"></div>
+    <div class="modal-footer" style="margin-top:12px">
+      <button class="btn btn-secondary" onclick="document.getElementById('empListModal').style.display='none'">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     Add Special Event Modal
+════════════════════════════════════════════════════════════════════════ -->
+<div id="eventModal" class="modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
+  <div class="modal event-modal">
+    <h2 id="eventModalTitle">Add Event</h2>
+    <button class="close-btn" id="eventModalClose" aria-label="Close">&times;</button>
+
+    <div class="event-form-body">
+
+      <!-- Team Members -->
+      <div class="field full-col">
+        <label>Team Member(s) *</label>
+        <div class="emp-select-wrap">
+          <label class="emp-select-all-row">
+            <input type="checkbox" id="eventEmpAll" /> Select All
+          </label>
+          <div id="eventEmpList" class="emp-checkbox-list">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Event (Status) + Multiple Dates toggle -->
+      <div class="event-two-col">
+        <div class="field">
+          <label for="eventStatus">Event (Status) *</label>
+          <select id="eventStatus">
+            <option value="">Choose an option</option>
+            <option value="On Shift 7AM">On Shift 7AM</option>
+            <option value="On Shift 4:30AM">On Shift 4:30AM</option>
+            <option value="Week Off">Week Off</option>
+            <option value="Holiday">Holiday</option>
+            <option value="On Leave">On Leave</option>
+            <option value="Half Day">Half Day</option>
+            <option value="Comp Off">Comp Off</option>
+          </select>
+        </div>
+        <div class="field" style="justify-content:flex-end;align-items:center;flex-direction:row;gap:10px;padding-top:22px">
+          <label style="font-size:.8rem;color:var(--color-muted);white-space:nowrap">Multiple Dates</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="eventMultipleDates" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Start Date -->
+      <div class="field">
+        <label for="eventStartDate">Start Date *</label>
+        <input type="date" id="eventStartDate" />
+      </div>
+
+      <!-- Stop Date (shown when Multiple Dates ON) -->
+      <div class="field" id="eventStopDateRow" style="display:none">
+        <label for="eventStopDate">Stop Date *</label>
+        <input type="date" id="eventStopDate" />
+      </div>
+
+      <!-- Repeats section (shown when Multiple Dates ON) -->
+      <div id="eventRepeatsSection" style="display:none">
+        <label class="repeats-toggle-row">
+          <input type="checkbox" id="eventRepeats" />
+          <span style="font-size:.85rem;font-weight:500">Repeats</span>
+        </label>
+
+        <div id="eventRepeatsBody" class="repeats-box" style="display:none">
+          <div style="font-size:.75rem;color:#dc2626;margin-bottom:6px">Within the Start and Stop Date Range</div>
+
+          <div class="field">
+            <label for="eventRecurStop">Stop Recurrence Date</label>
+            <input type="date" id="eventRecurStop" />
+          </div>
+
+          <div style="margin-top:8px">
+            <div style="font-size:.8rem;font-weight:500;margin-bottom:6px">Repeats Every</div>
+            <div class="dow-row">
+              <label class="dow-item dow-sun"><input type="checkbox" value="0" class="dow-cb" />Sun</label>
+              <label class="dow-item dow-mon"><input type="checkbox" value="1" class="dow-cb" />Mon</label>
+              <label class="dow-item dow-tue"><input type="checkbox" value="2" class="dow-cb" />Tue</label>
+              <label class="dow-item dow-wed"><input type="checkbox" value="3" class="dow-cb" />Wed</label>
+              <label class="dow-item dow-thu"><input type="checkbox" value="4" class="dow-cb" />Thu</label>
+              <label class="dow-item dow-fri"><input type="checkbox" value="5" class="dow-cb" />Fri</label>
+              <label class="dow-item dow-sat"><input type="checkbox" value="6" class="dow-cb" />Sat</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments -->
+      <div class="field full-col">
+        <label for="eventComments">Comments</label>
+        <textarea id="eventComments" rows="3" placeholder="Add your event comment." maxlength="500"></textarea>
+      </div>
+
+    </div><!-- /.event-form-body -->
+
+    <div class="event-modal-footer">
+      <button class="btn btn-secondary event-modal-cancel" id="eventModalCancel">Cancel</button>
+      <button class="btn btn-primary"   id="eventSaveBtn">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Scripts (ES modules) ─────────────────────────────────────────── -->
+<script type="module" src="scripts/app.js"></script>
+
+</body>
+</html>
